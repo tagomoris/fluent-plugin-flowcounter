@@ -47,11 +47,13 @@ class Fluent::FlowCounterOutput < Fluent::Output
     @watcher.join
   end
 
-  def count_initialized(keys)
+  def count_initialized(keys=nil)
     if @aggregate == :all
       {'count' => 0, 'bytes' => 0}
-    else
+    elsif keys
       Hash[[keys, [0]*(keys.length)].transpose]
+    else
+      {}
     end
   end
 
