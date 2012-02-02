@@ -15,13 +15,20 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "fluent-plugin-flowcounter"
+  gem.description = "Plugin to counts messages/bytes that matches, per minutes/hours/days"
   gem.homepage = "http://github.com/tagomoris/fluent-plugin-flowcounter"
-  gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = gem.description
   gem.email = "tagomoris@gmail.com"
   gem.authors = ["TAGOMORI Satoshi"]
+  gem.has_rdoc = "false"
   # dependencies defined in Gemfile
+  gem.files       = `git ls-files`.split("\n")
+  gem.test_files  = `git ls-files -- {test,spec,features}/*`.split("\n")
+  gem.executables = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
+  gem.require_paths = ['lib']
+  gem.add_dependency "fluentd", "~> 0.10.8"
+  gem.add_development_dependency "rake", ">= 0.9.2"
+  gem.add_development_dependency "simplecov", ">= 0.5.4"
 end
 Jeweler::RubygemsDotOrgTasks.new
 
