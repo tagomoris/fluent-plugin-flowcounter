@@ -7,12 +7,6 @@ class Fluent::FlowCounterOutput < Fluent::Output
   config_param :input_tag_remove_prefix, :string, :default => nil
   config_param :count_keys, :string
 
-# unit minute
-# aggregate tag
-# tag  flowcount
-# input_tag_remove_prefix test
-# count_keys :string
-  
   attr_accessor :counts
   attr_accessor :last_checked
 
@@ -53,11 +47,11 @@ class Fluent::FlowCounterOutput < Fluent::Output
     @watcher.join
   end
 
-  def count_initialized
+  def count_initialized(keys)
     if @aggregate == :all
       {'count' => 0, 'bytes' => 0}
     else
-      {}
+      Hash[[keys, [0]*(keys.length)].transpose]
     end
   end
 
@@ -81,7 +75,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
   end
 
   def flush(step)
-    flushed,@counts = @counts,count_initialized
+    flushed,@counts = @counts,count_initialized(@counts.keys)
     generate_output(flushed, step)
   end
 
