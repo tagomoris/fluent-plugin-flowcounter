@@ -1,19 +1,70 @@
 = fluent-plugin-flowcounter
 
-Description goes here.
+== Component
 
-== Contributing to fluent-plugin-flowcounter
- 
-* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
-* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
-* Fork the project
-* Start a feature/bugfix branch
-* Commit and push until you are happy with your contribution
-* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
-* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+=== FlowCounterOutput
+
+Count metricses below about matches.
+
+- Messages per min/hour/day
+- Bytes per min/hour/day
+- Messages per second (average every min/hour/day)
+- Bytes per second (average every min/hour/day)
+
+FlowCounterOutput emits messages contains results data, so you can output these message (with 'flowcount' tag by default) to any outputs you want.
+
+    output ex1 (aggragates all inputs): {"count":300, "bytes":3660, "count_rate":5, "bytes_rate":61}
+    output ex2 (aggragates per tag): {"test_count":300, "test_bytes":3660, "test_count_rate":5, "test_bytes_rate":61, "service1_count":180, "service1_bytes":7260, "service1_count_rate":3, "service1_bytes_rate":121}
+
+'input_tag_remove_prefix' option available if you want to remove tag prefix from output field names.
+
+== Configuration
+
+=== FlowCounterOutput
+
+Counts from fields 'field1' and 'field2', per minute(default), aggregates per tags(default), output with tag 'flowcount'(default).
+
+    <match **>
+      copy
+      <store>
+        # original output configurations...
+      </store>
+      <store>
+        type flowcounter
+        count_keys field1,field2
+      </store>
+    </match>
+    
+    <match flowcount>
+      # output configurations where to send count results
+    </match>
+
+Counts from field 'message', per hour, aggregates all tags, output with tag 'fluentd.traffic'.
+
+    <match **>
+      copy
+      <store>
+        # original output configurations...
+      </store>
+      <store>
+        type flowcounter
+        count_keys message
+        unit       hour
+        aggregate  all
+        tag        fluentd.traffic
+      </store>
+    </match>
+    
+    <match flowcount>
+      # output configurations where to send count results
+    </match>
+
+== TODO
+
+- consider what to do next
+- patches welcome!
 
 == Copyright
 
-Copyright (c) 2012 TAGOMORI Satoshi. See LICENSE.txt for
-further details.
-
+Copyright:: Copyright (c) 2012- TAGOMORI Satoshi (tagomoris)
+License::   Apache License, Version 2.0
