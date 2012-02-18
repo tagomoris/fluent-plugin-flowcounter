@@ -25,7 +25,7 @@ FlowCounterOutput emits messages contains results data, so you can output these 
 Counts from fields 'field1' and 'field2', per minute(default), aggregates per tags(default), output with tag 'flowcount'(default).
 
     <match **>
-      copy
+      type copy
       <store>
         # original output configurations...
       </store>
@@ -42,7 +42,7 @@ Counts from fields 'field1' and 'field2', per minute(default), aggregates per ta
 Counts from field 'message', per hour, aggregates all tags, output with tag 'fluentd.traffic'.
 
     <match **>
-      copy
+      type copy
       <store>
         # original output configurations...
       </store>
