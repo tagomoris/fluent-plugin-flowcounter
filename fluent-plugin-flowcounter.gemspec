@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{fluent-plugin-flowcounter}
-  s.version = "0.1.0"
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = [%q{TAGOMORI Satoshi}]
@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "fluent-plugin-flowcounter.gemspec",
     "lib/fluent/plugin/out_flowcounter.rb",
     "test/helper.rb",
     "test/plugin/test_out_flowcounter.rb"
