@@ -51,7 +51,8 @@ class Fluent::FlowCounterOutput < Fluent::Output
     if @aggregate == :all
       {'count' => 0, 'bytes' => 0}
     elsif keys
-      Hash[[keys, [0]*(keys.length)].transpose]
+      values = Array.new(keys.length){|i| 0 }
+      Hash[[keys, values].transpose]
     else
       {}
     end
