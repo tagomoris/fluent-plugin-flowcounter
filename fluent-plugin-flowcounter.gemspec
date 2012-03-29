@@ -4,14 +4,14 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{fluent-plugin-flowcounter}
-  s.version = "0.1.2"
+  s.name = "fluent-plugin-flowcounter"
+  s.version = "0.1.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = [%q{TAGOMORI Satoshi}]
-  s.date = %q{2012-02-23}
-  s.description = %q{Plugin to counts messages/bytes that matches, per minutes/hours/days}
-  s.email = %q{tagomoris@gmail.com}
+  s.authors = ["TAGOMORI Satoshi"]
+  s.date = "2012-03-29"
+  s.description = "Plugin to counts messages/bytes that matches, per minutes/hours/days"
+  s.email = "tagomoris@gmail.com"
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.rdoc"
@@ -30,11 +30,11 @@ Gem::Specification.new do |s|
     "test/helper.rb",
     "test/plugin/test_out_flowcounter.rb"
   ]
-  s.homepage = %q{http://github.com/tagomoris/fluent-plugin-flowcounter}
-  s.require_paths = [%q{lib}]
-  s.rubygems_version = %q{1.8.6}
-  s.summary = %q{Plugin to counts messages/bytes that matches, per minutes/hours/days}
-  s.test_files = [%q{test/helper.rb}, %q{test/plugin/test_out_flowcounter.rb}]
+  s.homepage = "http://github.com/tagomoris/fluent-plugin-flowcounter"
+  s.require_paths = ["lib"]
+  s.rubygems_version = "1.8.19"
+  s.summary = "Plugin to counts messages/bytes that matches, per minutes/hours/days"
+  s.test_files = ["test/helper.rb", "test/plugin/test_out_flowcounter.rb"]
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
@@ -42,7 +42,7 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<fluentd>, [">= 0"])
       s.add_development_dependency(%q<shoulda>, [">= 0"])
-      s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
+      s.add_development_dependency(%q<bundler>, ["~> 1.1.0"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.6.4"])
       s.add_development_dependency(%q<simplecov>, [">= 0"])
       s.add_development_dependency(%q<rdoc>, [">= 0"])
@@ -52,7 +52,7 @@ Gem::Specification.new do |s|
     else
       s.add_dependency(%q<fluentd>, [">= 0"])
       s.add_dependency(%q<shoulda>, [">= 0"])
-      s.add_dependency(%q<bundler>, ["~> 1.0.0"])
+      s.add_dependency(%q<bundler>, ["~> 1.1.0"])
       s.add_dependency(%q<jeweler>, ["~> 1.6.4"])
       s.add_dependency(%q<simplecov>, [">= 0"])
       s.add_dependency(%q<rdoc>, [">= 0"])
@@ -63,7 +63,7 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<fluentd>, [">= 0"])
     s.add_dependency(%q<shoulda>, [">= 0"])
-    s.add_dependency(%q<bundler>, ["~> 1.0.0"])
+    s.add_dependency(%q<bundler>, ["~> 1.1.0"])
     s.add_dependency(%q<jeweler>, ["~> 1.6.4"])
     s.add_dependency(%q<simplecov>, [">= 0"])
     s.add_dependency(%q<rdoc>, [">= 0"])
