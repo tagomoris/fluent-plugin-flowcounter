@@ -33,11 +33,11 @@ class Fluent::FlowCounterOutput < Fluent::Output
     @count_keys = @count_keys.split(',')
 
     @counts = count_initialized
+    @mutex = Mutex.new
   end
 
   def start
     super
-    @counts = count_initialized
     start_watch
   end
 
@@ -65,8 +65,10 @@ class Fluent::FlowCounterOutput < Fluent::Output
       c = name + '_count'
       b = name + '_bytes'
     end
-    @counts[c] = (@counts[c] || 0) + counts
-    @counts[b] = (@counts[b] || 0) + bytes
+    @mutex.synchronize {
+      @counts[c] = (@counts[c] || 0) + counts
+      @counts[b] = (@counts[b] || 0) + bytes
+    }
   end
 
   def generate_output(counts, step)
