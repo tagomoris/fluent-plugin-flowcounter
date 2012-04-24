@@ -67,6 +67,19 @@ count_keys message
     assert_equal 'test.flowcount', d.instance.tag
     assert_equal 'test', d.instance.input_tag_remove_prefix
     assert_equal ['message'], d.instance.count_keys
+
+    d = create_driver %[
+      unit day
+      aggregate all
+      tag test.flowcount
+      input_tag_remove_prefix test
+      count_keys *
+    ]
+    assert_equal :day, d.instance.unit
+    assert_equal :all, d.instance.aggregate
+    assert_equal 'test.flowcount', d.instance.tag
+    assert_equal 'test', d.instance.input_tag_remove_prefix
+    assert d.instance.count_all
   end
 
   def test_count_initialized
@@ -190,7 +203,33 @@ count_keys message
     d2.instance.flush_emit(60)
     emits = d2.emits
     assert_equal 1, emits.length
-    p emits[0].to_json
+    data = emits[0]
+    assert_equal 'flowcount', data[0] # tag
+    assert_equal 60*5, data[2]['count']
+    assert_equal 60*5*20, data[2]['bytes']
+  end
+
+  def test_emit3
+    d3 = create_driver( %[
+      unit minute
+      aggregate all
+      tag  flowcount
+      input_tag_remove_prefix test
+      count_keys *
+    ], 'test.tag3')
+    time = Time.now.to_i
+    d3.run do
+      60.times do 
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+      end
+    end
+    d3.instance.flush_emit(60)
+    emits = d3.emits
+    assert_equal 1, emits.length
     data = emits[0]
     assert_equal 'flowcount', data[0] # tag
     assert_equal 60*5, data[2]['count']

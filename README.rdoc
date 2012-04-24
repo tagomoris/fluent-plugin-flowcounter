@@ -59,6 +59,16 @@ Counts from field 'message', per hour, aggregates all tags, output with tag 'flu
       # output configurations where to send count results
     </match>
 
+To count with all fields in messages, specify 'count_keys *'.
+
+    <match target.**>
+      type flowcounter
+      count_keys *
+      unit hour
+      aggregate all
+      tag fluentd.traffic
+    </match>
+
 == TODO
 
 - consider what to do next

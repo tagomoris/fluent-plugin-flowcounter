@@ -9,6 +9,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
 
   attr_accessor :counts
   attr_accessor :last_checked
+  attr_accessor :count_all
 
   def configure(conf)
     super
@@ -31,6 +32,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
       @removed_length = @removed_prefix_string.length
     end
     @count_keys = @count_keys.split(',')
+    @count_all = (@count_keys == ['*'])
 
     @counts = count_initialized
     @mutex = Mutex.new
@@ -120,10 +122,17 @@ class Fluent::FlowCounterOutput < Fluent::Output
       name = tag[@removed_length..-1]
     end
     c,b = 0,0
-    es.each {|time,record|
-      c += 1
-      b += @count_keys.inject(0){|s,k| s + record[k].bytesize}
-    }
+    if @count_all
+      es.each {|time,record|
+        c += 1
+        b += record.keys.inject(0){|s,k| s + record[k].bytesize}
+      }
+    else
+      es.each {|time,record|
+        c += 1
+        b += @count_keys.inject(0){|s,k| s + record[k].bytesize}
+      }
+    end
     countup(name, c, b)
 
     chain.next
