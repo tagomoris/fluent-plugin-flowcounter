@@ -125,7 +125,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
     if @count_all
       es.each {|time,record|
         c += 1
-        b += record.keys.inject(0){|s,k| s + record[k].bytesize}
+        b += record.to_msgpack.bytesize
       }
     else
       es.each {|time,record|
