@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "fluent-plugin-flowcounter"
-  s.version = "0.1.4"
+  s.version = "0.1.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["TAGOMORI Satoshi"]
-  s.date = "2012-04-24"
+  s.date = "2012-05-25"
   s.description = "Plugin to counts messages/bytes that matches, per minutes/hours/days"
   s.email = "tagomoris@gmail.com"
   s.extra_rdoc_files = [
