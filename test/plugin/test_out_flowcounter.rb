@@ -233,6 +233,7 @@ count_keys message
     data = emits[0]
     assert_equal 'flowcount', data[0] # tag
     assert_equal 60*5, data[2]['count']
-    assert_equal 60*5*20, data[2]['bytes']
+    msgpack_size = {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'}.to_msgpack.bytesize * 5 * 60
+    assert_equal msgpack_size, data[2]['bytes']
   end
 end
