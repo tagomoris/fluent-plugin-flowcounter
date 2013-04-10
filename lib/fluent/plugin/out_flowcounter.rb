@@ -1,3 +1,5 @@
+require 'fluent/mixin/config_placeholders'
+
 class Fluent::FlowCounterOutput < Fluent::Output
   Fluent::Plugin.register_output('flowcounter', self)
 
@@ -6,6 +8,8 @@ class Fluent::FlowCounterOutput < Fluent::Output
   config_param :tag, :string, :default => 'flowcount'
   config_param :input_tag_remove_prefix, :string, :default => nil
   config_param :count_keys, :string
+
+  include Fluent::Mixin::ConfigPlaceholders
 
   attr_accessor :counts
   attr_accessor :last_checked
