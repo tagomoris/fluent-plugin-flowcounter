@@ -69,6 +69,14 @@ To count with all fields in messages, specify 'count_keys *'.
       tag fluentd.traffic
     </match>
 
+Use '${hostname}' if you want your hostname in tag.
+
+    <match target.**>
+      type flowcounter
+      count_keys *
+      tag fluentd.node.${hostname}
+    </match>
+
 == TODO
 
 - consider what to do next
