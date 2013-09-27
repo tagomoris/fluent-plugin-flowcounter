@@ -32,6 +32,7 @@ count_keys message
     ]
     assert_equal :minute, d.instance.unit
     assert_equal :tag, d.instance.aggregate
+    assert_equal :joined, d.instance.output_style
     assert_equal 'flowcount', d.instance.tag
     assert_nil d.instance.input_tag_remove_prefix
     assert_equal ['message'], d.instance.count_keys
@@ -41,6 +42,7 @@ count_keys message
     ]
     assert_equal :minute, d.instance.unit
     assert_equal :tag, d.instance.aggregate
+    assert_equal :joined, d.instance.output_style
     assert_equal 'flowcount', d.instance.tag
     assert_nil d.instance.input_tag_remove_prefix
     assert_equal ['field1', 'field2'], d.instance.count_keys
@@ -51,6 +53,18 @@ count_keys message
     ]
     assert_equal :hour, d.instance.unit
     assert_equal :tag, d.instance.aggregate
+    assert_equal :joined, d.instance.output_style
+    assert_equal 'flowcount', d.instance.tag
+    assert_nil d.instance.input_tag_remove_prefix
+    assert_equal ['message'], d.instance.count_keys
+
+    d = create_driver %[
+      output_style tagged
+      count_keys message
+    ]
+    assert_equal :minute, d.instance.unit
+    assert_equal :tag, d.instance.aggregate
+    assert_equal :tagged, d.instance.output_style
     assert_equal 'flowcount', d.instance.tag
     assert_nil d.instance.input_tag_remove_prefix
     assert_equal ['message'], d.instance.count_keys
@@ -64,6 +78,7 @@ count_keys message
     ]
     assert_equal :day, d.instance.unit
     assert_equal :all, d.instance.aggregate
+    assert_equal :joined, d.instance.output_style
     assert_equal 'test.flowcount', d.instance.tag
     assert_equal 'test', d.instance.input_tag_remove_prefix
     assert_equal ['message'], d.instance.count_keys
@@ -77,6 +92,7 @@ count_keys message
     ]
     assert_equal :day, d.instance.unit
     assert_equal :all, d.instance.aggregate
+    assert_equal :joined, d.instance.output_style
     assert_equal 'test.flowcount', d.instance.tag
     assert_equal 'test', d.instance.input_tag_remove_prefix
     assert d.instance.count_all
@@ -244,5 +260,29 @@ count_keys message
     assert_equal 60*5, data[2]['count']
     msgpack_size = {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'}.to_msgpack.bytesize * 5 * 60
     assert_equal msgpack_size, data[2]['bytes']
+  end
+
+  def test_emit_tagged
+    d1 = create_driver( %[
+      unit minute
+      aggregate tag
+      output_style tagged
+      tag flow
+      input_tag_remove_prefix test
+      count_keys *
+    ], 'test.tag1')
+    time = Time.parse("2012-01-02 13:14:15").to_i
+    d1.run do
+      60.times do
+        d1.emit({'message'=> 'hello'})
+      end
+    end
+    r1 = d1.instance.tagged_flush(60)
+    assert_equal 1, r1.length
+    assert_equal 'tag1', r1[0]['tag']
+    assert_equal 60, r1[0]['count']
+    assert_equal 60*15, r1[0]['bytes']
+    assert_equal 1.0, r1[0]['count_rate']
+    assert_equal 15.0, r1[0]['bytes_rate']
   end
 end
