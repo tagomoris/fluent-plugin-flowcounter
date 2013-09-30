@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
   gem.name        = "fluent-plugin-flowcounter"
-  gem.version     = "0.1.8"
+  gem.version     = "0.1.9"
   gem.authors     = ["TAGOMORI Satoshi"]
   gem.email       = ["tagomoris@gmail.com"]
   gem.summary     = %q{Fluent plugin to count message flow}
@@ -15,7 +15,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.add_development_dependency "rake"
-  gem.add_development_dependency "shoulda"
   gem.add_runtime_dependency "fluentd"
   gem.add_runtime_dependency "fluent-mixin-config-placeholders"
 end
