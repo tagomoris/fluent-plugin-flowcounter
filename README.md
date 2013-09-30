@@ -1,26 +1,25 @@
-= fluent-plugin-flowcounter
-
-== Component
-
-=== FlowCounterOutput
+# fluent-plugin-flowcounter
 
 Count metricses below about matches.
 
-- Messages per minute/hour/day
-- Bytes per minute/hour/day
-- Messages per second (average every minute/hour/day)
-- Bytes per second (average every minute/hour/day)
+* Messages per minute/hour/day
+* Bytes per minute/hour/day
+* Messages per second (average every minute/hour/day)
+* Bytes per second (average every minute/hour/day)
 
 FlowCounterOutput emits messages contains results data, so you can output these message (with 'flowcount' tag by default) to any outputs you want.
 
     output ex1 (aggragates all inputs): {"count":300, "bytes":3660, "count_rate":5, "bytes_rate":61}
     output ex2 (aggragates per tag): {"test_count":300, "test_bytes":3660, "test_count_rate":5, "test_bytes_rate":61, "service1_count":180, "service1_bytes":7260, "service1_count_rate":3, "service1_bytes_rate":121}
 
-'input_tag_remove_prefix' option available if you want to remove tag prefix from output field names.
+Or, output result data with for each tags (with `output_style tagged`)
 
-== Configuration
+    {"tag":"test", "count":300, "bytes":3660, "count_rate":5, "bytes_rate":61}
+    {"tag":"service1", "count":180, "bytes":7260, "count_rate":3, "bytes_rate":121}
 
-=== FlowCounterOutput
+`input_tag_remove_prefix` option available if you want to remove tag prefix from output field names.
+
+## Configuration
 
 Counts from fields 'field1' and 'field2', per minute(default), aggregates per tags(default), output with tag 'flowcount'(default).
 
@@ -77,12 +76,14 @@ Use '${hostname}' if you want your hostname in tag.
       tag fluentd.node.${hostname}
     </match>
 
-== TODO
+## TODO
 
-- consider what to do next
-- patches welcome!
+* consider what to do next
+* patches welcome!
 
-== Copyright
+## Copyright
 
-Copyright:: Copyright (c) 2012- TAGOMORI Satoshi (tagomoris)
-License::   Apache License, Version 2.0
+* Copyright
+  * Copyright (c) 2012- TAGOMORI Satoshi (tagomoris)
+* License
+  * Apache License, Version 2.0
