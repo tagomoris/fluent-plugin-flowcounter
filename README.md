@@ -2,10 +2,10 @@
 
 Count metricses below about matches.
 
-* Messages per minute/hour/day
-* Bytes per minute/hour/day
-* Messages per second (average every minute/hour/day)
-* Bytes per second (average every minute/hour/day)
+* Messages per second/minute/hour/day
+* Bytes per second/minute/hour/day
+* Messages per second (average every second/minute/hour/day)
+* Bytes per second (average every second/minute/hour/day)
 
 FlowCounterOutput emits messages contains results data, so you can output these message (with 'flowcount' tag by default) to any outputs you want.
 

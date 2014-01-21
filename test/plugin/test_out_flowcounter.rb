@@ -31,6 +31,7 @@ count_keys message
       count_keys message
     ]
     assert_equal :minute, d.instance.unit
+    assert_equal 60, d.instance.tick
     assert_equal :tag, d.instance.aggregate
     assert_equal :joined, d.instance.output_style
     assert_equal 'flowcount', d.instance.tag
@@ -41,6 +42,7 @@ count_keys message
       count_keys field1,field2
     ]
     assert_equal :minute, d.instance.unit
+    assert_equal 60, d.instance.tick
     assert_equal :tag, d.instance.aggregate
     assert_equal :joined, d.instance.output_style
     assert_equal 'flowcount', d.instance.tag
@@ -48,10 +50,23 @@ count_keys message
     assert_equal ['field1', 'field2'], d.instance.count_keys
 
     d = create_driver %[
+      unit second
+      count_keys message
+    ]
+    assert_equal :second, d.instance.unit
+    assert_equal 1, d.instance.tick
+    assert_equal :tag, d.instance.aggregate
+    assert_equal :joined, d.instance.output_style
+    assert_equal 'flowcount', d.instance.tag
+    assert_nil d.instance.input_tag_remove_prefix
+    assert_equal ['message'], d.instance.count_keys
+
+    d = create_driver %[
       unit hour
       count_keys message
     ]
     assert_equal :hour, d.instance.unit
+    assert_equal 3600, d.instance.tick
     assert_equal :tag, d.instance.aggregate
     assert_equal :joined, d.instance.output_style
     assert_equal 'flowcount', d.instance.tag
@@ -63,6 +78,7 @@ count_keys message
       count_keys message
     ]
     assert_equal :minute, d.instance.unit
+    assert_equal 60, d.instance.tick
     assert_equal :tag, d.instance.aggregate
     assert_equal :tagged, d.instance.output_style
     assert_equal 'flowcount', d.instance.tag
@@ -77,6 +93,7 @@ count_keys message
       count_keys message
     ]
     assert_equal :day, d.instance.unit
+    assert_equal 86400, d.instance.tick
     assert_equal :all, d.instance.aggregate
     assert_equal :joined, d.instance.output_style
     assert_equal 'test.flowcount', d.instance.tag
@@ -91,6 +108,7 @@ count_keys message
       count_keys *
     ]
     assert_equal :day, d.instance.unit
+    assert_equal 86400, d.instance.tick
     assert_equal :all, d.instance.aggregate
     assert_equal :joined, d.instance.output_style
     assert_equal 'test.flowcount', d.instance.tag
