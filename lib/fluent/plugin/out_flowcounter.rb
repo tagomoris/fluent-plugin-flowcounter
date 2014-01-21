@@ -15,16 +15,26 @@ class Fluent::FlowCounterOutput < Fluent::Output
   attr_accessor :counts
   attr_accessor :last_checked
   attr_accessor :count_all
+  attr_reader :tick
 
   def configure(conf)
     super
 
     @unit = case @unit
+            when 'second' then :second
             when 'minute' then :minute
             when 'hour' then :hour
             when 'day' then :day
             else
-              raise Fluent::ConfigError, "flowcounter unit allows minute/hour/day"
+              raise Fluent::ConfigError, "flowcounter unit allows second/minute/hour/day"
+            end
+    @tick = case @unit
+            when :second then 1
+            when :minute then 60
+            when :hour then 3600
+            when :day then 86400
+            else
+              raise Fluent::ConfigError, "flowcounter unit allows second/minute/hour/day"
             end
     @aggregate = case @aggregate
                  when 'tag' then :tag
@@ -132,16 +142,9 @@ class Fluent::FlowCounterOutput < Fluent::Output
   def watch
     # instance variable, and public accessable, for test
     @last_checked = Fluent::Engine.now
-    tick = case @unit
-           when :minute then 60
-           when :hour then 3600
-           when :day then 86400
-           else
-             raise RuntimeError, "@unit must be one of minute/hour/day"
-           end
     while true
       sleep 0.5
-      if Fluent::Engine.now - @last_checked >= tick
+      if Fluent::Engine.now - @last_checked >= @tick
         now = Fluent::Engine.now
         flush_emit(now - @last_checked)
         @last_checked = now
