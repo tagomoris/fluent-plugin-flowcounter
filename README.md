@@ -1,6 +1,6 @@
-# fluent-plugin-flowcounter, a plugin for [Fluentd](http://fluentd.org)
+# fluent-plugin-flowcounter
 
-Count metricses below about matches.
+Count metrics below about matches. This is a plugin for [Fluentd](http://fluentd.org)
 
 * Messages per second/minute/hour/day
 * Bytes per second/minute/hour/day
