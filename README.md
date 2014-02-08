@@ -1,4 +1,4 @@
-# fluent-plugin-flowcounter
+# fluent-plugin-flowcounter, a plugin for [Fluentd](http://fluentd.org)
 
 Count metricses below about matches.
 
