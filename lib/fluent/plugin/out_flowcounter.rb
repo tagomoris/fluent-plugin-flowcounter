@@ -3,6 +3,11 @@ require 'fluent/mixin/config_placeholders'
 class Fluent::FlowCounterOutput < Fluent::Output
   Fluent::Plugin.register_output('flowcounter', self)
 
+  # Define `log` method for v0.10.42 or earlier
+  unless method_defined?(:log)
+    define_method("log") { $log }
+  end
+
   config_param :unit, :string, :default => 'minute'
   config_param :aggregate, :string, :default => 'tag'
   config_param :output_style, :string, :default => 'joined'
