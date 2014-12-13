@@ -8,6 +8,11 @@ class Fluent::FlowCounterOutput < Fluent::Output
     define_method("log") { $log }
   end
 
+  # Define `router` method of v0.12 to support v0.10 or earlier
+  unless method_defined?(:router)
+    define_method("router") { ::Fluent::Engine }
+  end
+
   config_param :unit, :string, :default => 'minute'
   config_param :aggregate, :string, :default => 'tag'
   config_param :output_style, :string, :default => 'joined'
@@ -132,10 +137,10 @@ class Fluent::FlowCounterOutput < Fluent::Output
   def flush_emit(step)
     if @output_style == :tagged
       tagged_flush(step).each do |data|
-        Fluent::Engine.emit(@tag, Fluent::Engine.now, data)
+        router.emit(@tag, Fluent::Engine.now, data)
       end
     else
-      Fluent::Engine.emit(@tag, Fluent::Engine.now, flush(step))
+      router.emit(@tag, Fluent::Engine.now, flush(step))
     end
   end
 
