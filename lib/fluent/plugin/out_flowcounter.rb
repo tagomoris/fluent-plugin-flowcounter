@@ -19,6 +19,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
   config_param :tag, :string, :default => 'flowcount'
   config_param :input_tag_remove_prefix, :string, :default => nil
   config_param :count_keys, :string
+  config_param :delimiter, :string, :default => '_'
 
   include Fluent::Mixin::ConfigPlaceholders
 
@@ -98,8 +99,8 @@ class Fluent::FlowCounterOutput < Fluent::Output
     c = 'count'
     b = 'bytes'
     if @aggregate == :tag
-      c = name + '_count'
-      b = name + '_bytes'
+      c = name + delimiter + 'count'
+      b = name + delimiter + 'bytes'
     end
     @mutex.synchronize {
       @counts[c] = (@counts[c] || 0) + counts
@@ -122,11 +123,11 @@ class Fluent::FlowCounterOutput < Fluent::Output
 
   def tagged_flush(step)
     flushed,@counts = @counts,count_initialized(@counts.keys)
-    names = flushed.keys.select {|x| x.end_with?('_count')}.map {|x| x.chomp('_count')}
+    names = flushed.keys.select {|x| x.end_with?(delimiter + 'count')}.map {|x| x.chomp(delimiter + 'count')}
     names.map {|name|
       counts = {
-        'count' => flushed[name + '_count'],
-        'bytes' => flushed[name + '_bytes'],
+        'count' => flushed[name + delimiter + 'count'],
+        'bytes' => flushed[name + delimiter + 'bytes'],
       }
       data = generate_output(counts, step)
       data['tag'] = name
