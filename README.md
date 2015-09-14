@@ -54,7 +54,7 @@ Counts from field 'message', per hour, aggregates all tags, output with tag 'flu
       </store>
     </match>
     
-    <match flowcount>
+    <match fluentd.traffic>
       # output configurations where to send count results
     </match>
 
