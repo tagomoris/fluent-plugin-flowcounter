@@ -163,6 +163,8 @@ class Fluent::FlowCounterOutput < Fluent::Output
     end
   end
 
+  FOR_MISSING = ''
+
   def emit(tag, es, chain)
     name = tag
     if @input_tag_remove_prefix and
@@ -178,7 +180,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
     else
       es.each {|time,record|
         c += 1
-        b += @count_keys.inject(0){|s,k| s + record[k].bytesize}
+        b += @count_keys.inject(0){|s,k| s + (record[k] || FOR_MISSING).bytesize}
       }
     end
     countup(name, c, b)

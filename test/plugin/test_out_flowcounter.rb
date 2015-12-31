@@ -303,4 +303,31 @@ count_keys message
     assert_equal 1.0, r1[0]['count_rate']
     assert_equal 15.0, r1[0]['bytes_rate']
   end
+
+  def test_emit_records_without_specified_field
+    d3 = create_driver( %[
+      unit minute
+      aggregate all
+      tag  flowcount
+      input_tag_remove_prefix test
+      count_keys f4
+    ], 'test.tag4')
+    time = Time.now.to_i
+    d3.run do
+      60.times do
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+      end
+    end
+    d3.instance.flush_emit(60)
+    emits = d3.emits
+    assert_equal 1, emits.length
+    data = emits[0]
+    assert_equal 'flowcount', data[0]
+    assert_equal 60*5, data[2]['count']
+    assert_equal 0, data[2]['bytes']
+  end
 end
