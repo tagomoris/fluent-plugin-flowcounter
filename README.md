@@ -24,12 +24,12 @@ Or, output result data with for each tags (with `output_style tagged`)
 Counts from fields 'field1' and 'field2', per minute(default), aggregates per tags(default), output with tag 'flowcount'(default).
 
     <match **>
-      type copy
+      @type copy
       <store>
         # original output configurations...
       </store>
       <store>
-        type flowcounter
+        @type flowcounter
         count_keys field1,field2
       </store>
     </match>
@@ -41,12 +41,12 @@ Counts from fields 'field1' and 'field2', per minute(default), aggregates per ta
 Counts from field 'message', per hour, aggregates all tags, output with tag 'fluentd.traffic'.
 
     <match **>
-      type copy
+      @type copy
       <store>
         # original output configurations...
       </store>
       <store>
-        type flowcounter
+        @type flowcounter
         count_keys message
         unit       hour
         aggregate  all
@@ -61,7 +61,7 @@ Counts from field 'message', per hour, aggregates all tags, output with tag 'flu
 To count with all fields in messages, specify 'count_keys *'.
 
     <match target.**>
-      type flowcounter
+      @type flowcounter
       count_keys *
       unit hour
       aggregate all
@@ -71,7 +71,7 @@ To count with all fields in messages, specify 'count_keys *'.
 Use '${hostname}' if you want your hostname in tag.
 
     <match target.**>
-      type flowcounter
+      @type flowcounter
       count_keys *
       tag fluentd.node.${hostname}
     </match>
