@@ -13,13 +13,13 @@ class Fluent::FlowCounterOutput < Fluent::Output
     define_method("router") { ::Fluent::Engine }
   end
 
-  config_param :unit, :string, :default => 'minute'
-  config_param :aggregate, :string, :default => 'tag'
-  config_param :output_style, :string, :default => 'joined'
-  config_param :tag, :string, :default => 'flowcount'
-  config_param :input_tag_remove_prefix, :string, :default => nil
+  config_param :unit, :string, default: 'minute'
+  config_param :aggregate, :string, default: 'tag'
+  config_param :output_style, :string, default: 'joined'
+  config_param :tag, :string, default: 'flowcount'
+  config_param :input_tag_remove_prefix, :string, default: nil
   config_param :count_keys, :string
-  config_param :delimiter, :string, :default => '_'
+  config_param :delimiter, :string, default: '_'
 
   include Fluent::Mixin::ConfigPlaceholders
 
