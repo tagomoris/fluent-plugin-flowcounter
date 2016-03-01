@@ -4,7 +4,7 @@ class FlowCounterOutputTest < Test::Unit::TestCase
   def setup
     Fluent::Test.setup
   end
-  
+
   CONFIG = %[
 unit day
 aggregate tag
@@ -18,9 +18,9 @@ count_keys message
   end
 
   def test_configure
-    assert_raise(Fluent::ConfigError) {
-      d = create_driver('')
-    }
+    d = create_driver('')
+    assert !(d.instance.instance_eval{ @count_bytes })
+
     assert_raise(Fluent::ConfigError) {
       d = create_driver %[
         count_keys message,message2
@@ -235,7 +235,7 @@ count_keys message
     ], 'test.tag2')
     time = Time.now.to_i
     d2.run do
-      60.times do 
+      60.times do
         d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
         d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
         d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
@@ -262,7 +262,7 @@ count_keys message
     ], 'test.tag3')
     time = Time.now.to_i
     d3.run do
-      60.times do 
+      60.times do
         d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
         d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
         d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
@@ -302,6 +302,45 @@ count_keys message
     assert_equal 60*15, r1[0]['bytes']
     assert_equal 1.0, r1[0]['count_rate']
     assert_equal 15.0, r1[0]['bytes_rate']
+  end
+
+  def test_emit_not_to_count_bytes
+    d1 = create_driver( %[
+      unit day
+      aggregate tag
+      tag  flowcount
+      input_tag_remove_prefix test
+    ], 'test.tag1')
+    time = Time.parse("2012-01-02 13:14:15").to_i
+    d1.run do
+      3600.times do
+        d1.emit({'message'=> 'a' * 100})
+        d1.emit({'message'=> 'b' * 100})
+        d1.emit({'message'=> 'c' * 100})
+      end
+    end
+    r1 = d1.instance.flush(3600 * 24)
+    assert_equal 3600*3, r1['tag1_count']
+    assert_nil r1['tag1_bytes']
+    assert_equal (300/24.0).floor / 100.0, r1['tag1_count_rate'] # 3 * 3600 / (60 * 60 * 24) as xx.xx
+    assert_nil r1['tag1_bytes_rate']
+
+    d3 = create_driver( %[
+      unit minute
+      aggregate all
+      tag flow
+    ], 'test.tag1')
+    time = Time.parse("2012-01-02 13:14:15").to_i
+    d3.run do
+      60.times do
+        d3.emit({'f1'=>'1'*10, 'f2'=>'2'*20, 'f3'=>'3'*10})
+      end
+    end
+    r3 = d3.instance.flush(60)
+    assert_equal 60, r3['count']
+    assert_nil r3['bytes']
+    assert_equal 1.0, r3['count_rate']
+    assert_nil r3['bytes_rate']
   end
 
   def test_emit_records_without_specified_field

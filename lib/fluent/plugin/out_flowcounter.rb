@@ -18,7 +18,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
   config_param :output_style, :string, default: 'joined'
   config_param :tag, :string, default: 'flowcount'
   config_param :input_tag_remove_prefix, :string, default: nil
-  config_param :count_keys, :string
+  config_param :count_keys, :string, default: nil
   config_param :delimiter, :string, default: '_'
 
   include Fluent::Mixin::ConfigPlaceholders
@@ -66,8 +66,13 @@ class Fluent::FlowCounterOutput < Fluent::Output
       @removed_prefix_string = @input_tag_remove_prefix + '.'
       @removed_length = @removed_prefix_string.length
     end
-    @count_keys = @count_keys.split(',')
-    @count_all = (@count_keys == ['*'])
+    if @count_keys
+      @count_keys = @count_keys.split(',')
+      @count_all = (@count_keys == ['*'])
+      @count_bytes = true
+    else
+      @count_bytes = false
+    end
 
     @counts = count_initialized
     @mutex = Mutex.new
@@ -86,7 +91,11 @@ class Fluent::FlowCounterOutput < Fluent::Output
 
   def count_initialized(keys=nil)
     if @aggregate == :all
-      {'count' => 0, 'bytes' => 0}
+      if @count_bytes
+        {'count' => 0, 'bytes' => 0}
+      else
+        {'count' => 0}
+      end
     elsif keys
       values = Array.new(keys.length){|i| 0 }
       Hash[[keys, values].transpose]
@@ -100,11 +109,11 @@ class Fluent::FlowCounterOutput < Fluent::Output
     b = 'bytes'
     if @aggregate == :tag
       c = name + delimiter + 'count'
-      b = name + delimiter + 'bytes'
+      b = name + delimiter + 'bytes' if @count_bytes
     end
     @mutex.synchronize {
       @counts[c] = (@counts[c] || 0) + counts
-      @counts[b] = (@counts[b] || 0) + bytes
+      @counts[b] = (@counts[b] || 0) + bytes if @count_bytes
     }
   end
 
@@ -127,8 +136,10 @@ class Fluent::FlowCounterOutput < Fluent::Output
     names.map {|name|
       counts = {
         'count' => flushed[name + delimiter + 'count'],
-        'bytes' => flushed[name + delimiter + 'bytes'],
       }
+      if @count_bytes
+        counts['bytes'] = flushed[name + delimiter + 'bytes']
+      end
       data = generate_output(counts, step)
       data['tag'] = name
       data
@@ -175,12 +186,12 @@ class Fluent::FlowCounterOutput < Fluent::Output
     if @count_all
       es.each {|time,record|
         c += 1
-        b += record.to_msgpack.bytesize
+        b += record.to_msgpack.bytesize if @count_bytes
       }
     else
       es.each {|time,record|
         c += 1
-        b += @count_keys.inject(0){|s,k| s + (record[k] || FOR_MISSING).bytesize}
+        b += @count_keys.inject(0){|s,k| s + (record[k] || FOR_MISSING).bytesize} if @count_bytes
       }
     end
     countup(name, c, b)
