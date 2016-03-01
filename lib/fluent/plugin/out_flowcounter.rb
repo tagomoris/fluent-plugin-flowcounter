@@ -67,7 +67,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
       @removed_length = @removed_prefix_string.length
     end
     if @count_keys
-      @count_keys = @count_keys.split(',')
+      @count_keys = @count_keys.split(',').map(&:strip)
       @count_all = (@count_keys == ['*'])
       @count_bytes = true
     else

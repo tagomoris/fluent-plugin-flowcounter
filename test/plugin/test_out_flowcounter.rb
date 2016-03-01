@@ -86,6 +86,18 @@ count_keys message
     assert_equal ['message'], d.instance.count_keys
 
     d = create_driver %[
+      output_style tagged
+      count_keys f1, f2, f3
+    ]
+    assert_equal :minute, d.instance.unit
+    assert_equal 60, d.instance.tick
+    assert_equal :tag, d.instance.aggregate
+    assert_equal :tagged, d.instance.output_style
+    assert_equal 'flowcount', d.instance.tag
+    assert_nil d.instance.input_tag_remove_prefix
+    assert_equal ['f1', 'f2', 'f3'], d.instance.count_keys
+
+    d = create_driver %[
       unit day
       aggregate all
       tag test.flowcount
