@@ -3,9 +3,9 @@
 Count metrics below about matches. This is a plugin for [Fluentd](http://fluentd.org)
 
 * Messages per second/minute/hour/day
-* Bytes per second/minute/hour/day
+* Bytes per second/minute/hour/day (optional)
 * Messages per second (average every second/minute/hour/day)
-* Bytes per second (average every second/minute/hour/day)
+* Bytes per second (average every second/minute/hour/day) (optional)
 
 FlowCounterOutput emits messages contains results data, so you can output these message (with 'flowcount' tag by default) to any outputs you want.
 
@@ -18,6 +18,10 @@ Or, output result data with for each tags (with `output_style tagged`)
     {"tag":"service1", "count":180, "bytes":7260, "count_rate":3, "bytes_rate":121}
 
 `input_tag_remove_prefix` option available if you want to remove tag prefix from output field names.
+
+If you want to count only records, omit `count_keys` configuration.
+
+    {"tag":"test", "count":300, "count_rate":5}
 
 ## Configuration
 
@@ -63,6 +67,15 @@ To count with all fields in messages, specify 'count_keys *'.
     <match target.**>
       @type flowcounter
       count_keys *
+      unit hour
+      aggregate all
+      tag fluentd.traffic
+    </match>
+
+To count records only (without bytes), omit `count_keys` (it runs in better performance.)
+
+    <match target.**>
+      @type flowcounter
       unit hour
       aggregate all
       tag fluentd.traffic
