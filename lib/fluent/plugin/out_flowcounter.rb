@@ -1,17 +1,10 @@
+require 'fluent/plugin/output'
 require 'fluent/mixin/config_placeholders'
 
-class Fluent::FlowCounterOutput < Fluent::Output
+class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('flowcounter', self)
 
-  # Define `log` method for v0.10.42 or earlier
-  unless method_defined?(:log)
-    define_method("log") { $log }
-  end
-
-  # Define `router` method of v0.12 to support v0.10 or earlier
-  unless method_defined?(:router)
-    define_method("router") { ::Fluent::Engine }
-  end
+  helpers :event_emitter
 
   config_param :unit, :string, default: 'minute'
   config_param :aggregate, :string, default: 'tag'
@@ -66,6 +59,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
       @removed_prefix_string = @input_tag_remove_prefix + '.'
       @removed_length = @removed_prefix_string.length
     end
+    @count_all = false
     if @count_keys
       @count_keys = @count_keys.split(',').map(&:strip)
       @count_all = (@count_keys == ['*'])
@@ -176,7 +170,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
 
   FOR_MISSING = ''
 
-  def emit(tag, es, chain)
+  def process(tag, es)
     name = tag
     if @input_tag_remove_prefix and
         ( (tag.start_with?(@removed_prefix_string) and tag.length > @removed_length) or tag == @input_tag_remove_prefix)
@@ -195,7 +189,5 @@ class Fluent::FlowCounterOutput < Fluent::Output
       }
     end
     countup(name, c, b)
-
-    chain.next
   end
 end
