@@ -4,7 +4,7 @@ require 'fluent/mixin/config_placeholders'
 class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('flowcounter', self)
 
-  helpers :event_emitter
+  helpers :event_emitter, :timer
 
   config_param :unit, :string, default: 'minute'
   config_param :aggregate, :string, default: 'tag'
@@ -79,8 +79,6 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
 
   def shutdown
     super
-    @watcher.terminate
-    @watcher.join
   end
 
   def count_initialized(keys=nil)
@@ -151,20 +149,16 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   end
 
   def start_watch
+    @last_checked = Fluent::Engine.now
     # for internal, or tests only
-    @watcher = Thread.new(&method(:watch))
+    timer_execute(:out_flowcounter_wacher, 0.5, &method(:watch))
   end
 
   def watch
-    # instance variable, and public accessable, for test
-    @last_checked = Fluent::Engine.now
-    while true
-      sleep 0.5
-      if Fluent::Engine.now - @last_checked >= @tick
-        now = Fluent::Engine.now
-        flush_emit(now - @last_checked)
-        @last_checked = now
-      end
+    if Fluent::Engine.now - @last_checked >= @tick
+      now = Fluent::Engine.now
+      flush_emit(now - @last_checked)
+      @last_checked = now
     end
   end
 
