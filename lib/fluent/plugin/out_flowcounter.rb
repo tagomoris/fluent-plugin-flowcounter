@@ -20,6 +20,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
   config_param :input_tag_remove_prefix, :string, default: nil
   config_param :count_keys, :string, default: nil
   config_param :delimiter, :string, default: '_'
+  config_param :delete_idle, :bool, default: false
 
   include Fluent::Mixin::ConfigPlaceholders
 
@@ -126,12 +127,14 @@ class Fluent::FlowCounterOutput < Fluent::Output
   end
 
   def flush(step)
-    flushed,@counts = @counts,count_initialized(@counts.keys)
+    keys = delete_idle ? nil : @counts.keys
+    flushed,@counts = @counts,count_initialized(keys)
     generate_output(flushed, step)
   end
 
   def tagged_flush(step)
-    flushed,@counts = @counts,count_initialized(@counts.keys)
+    keys = delete_idle ? nil : @counts.keys
+    flushed,@counts = @counts,count_initialized(keys)
     names = flushed.keys.select {|x| x.end_with?(delimiter + 'count')}.map {|x| x.chomp(delimiter + 'count')}
     names.map {|name|
       counts = {
