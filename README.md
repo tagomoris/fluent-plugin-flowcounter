@@ -89,6 +89,15 @@ Use '${hostname}' if you want your hostname in tag.
       tag fluentd.node.${hostname}
     </match>
 
+Counts active tag, stop count records if the tag message stoped(when aggragates per tag).
+
+    <match target.**>
+      @type flowcounter
+      count_keys *
+      aggregate tag
+      delete_idle true
+    </match>
+
 ## TODO
 
 * consider what to do next
