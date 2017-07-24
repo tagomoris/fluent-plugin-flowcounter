@@ -98,6 +98,16 @@ Counts active tag, stop count records if the tag message stoped(when aggragates 
       delete_idle true
     </match>
 
+Set `use_clock_output` to `true`(default is `false`) and set `clock_output_interval`(support `minutely`|`hourly`|`daily`, default is `minutely`) when using clock output format.
+
+    <match target.**>
+      @type flowcounter
+      count_keys *
+      aggregate tag
+      use_clock_output true
+      clock_output_interval daily
+    </match>
+
 ## TODO
 
 * consider what to do next
