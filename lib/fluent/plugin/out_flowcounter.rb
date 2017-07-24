@@ -21,6 +21,8 @@ class Fluent::FlowCounterOutput < Fluent::Output
   config_param :count_keys, :string, default: nil
   config_param :delimiter, :string, default: '_'
   config_param :delete_idle, :bool, default: false
+  config_param :use_clock_output, :bool, default: false
+  config_param :clock_output_interval, :string, default: 'minutely'
 
   include Fluent::Mixin::ConfigPlaceholders
 
@@ -60,6 +62,13 @@ class Fluent::FlowCounterOutput < Fluent::Output
                  else
                    raise Fluent::ConfigError, "flowcounter output_style allows joined/tagged"
                  end
+    @clock_output_interval = case @clock_output_interval
+            when 'minutely' then :minutely
+            when 'hourly' then :hourly
+            when 'daily' then :daily
+            else
+              raise Fluent::ConfigError, "flowcounter clock_output_interval allows minutely/hourly/daily"
+            end
     if @output_style == :tagged and @aggregate != :tag
       raise Fluent::ConfigError, "flowcounter aggregate must be 'tag' when output_style is 'tagged'"
     end
@@ -167,12 +176,41 @@ class Fluent::FlowCounterOutput < Fluent::Output
   def watch
     # instance variable, and public accessable, for test
     @last_checked = Fluent::Engine.now
-    while true
-      sleep 0.5
-      if Fluent::Engine.now - @last_checked >= @tick
-        now = Fluent::Engine.now
-        flush_emit(now - @last_checked)
-        @last_checked = now
+    if clock_output_interval == :hourly && use_clock_output
+      while true
+        sleep 1
+        if Time.now.sec == 0 && Time.now.min == 0
+          now = Fluent::Engine.now
+          flush_emit(now - @last_checked)
+          @last_checked = now
+        end
+      end
+    elsif clock_output_interval == :minutely && use_clock_output
+      while true
+        sleep 1
+        if Time.now.sec == 0
+          now = Fluent::Engine.now
+          flush_emit(now - @last_checked)
+          @last_checked = now
+        end
+      end
+    elsif clock_output_interval == :daily && use_clock_output
+      while true
+        sleep 1
+        if Time.now.sec == 0 && Time.now.min == 0 && Time.now.hour == 0
+          now = Fluent::Engine.now
+          flush_emit(now - @last_checked)
+          @last_checked = now
+        end
+      end
+    else
+      while true
+        sleep 0.5
+        if Fluent::Engine.now - @last_checked >= @tick
+          now = Fluent::Engine.now
+          flush_emit(now - @last_checked)
+          @last_checked = now
+        end
       end
     end
   end
