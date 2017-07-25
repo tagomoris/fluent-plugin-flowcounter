@@ -55,10 +55,6 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
     start_watch
   end
 
-  def shutdown
-    super
-  end
-
   def count_initialized(keys=nil)
     if @aggregate == :all
       if @count_bytes
