@@ -1,5 +1,4 @@
 require 'fluent/plugin/output'
-require 'fluent/mixin/config_placeholders'
 
 class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('flowcounter', self)
@@ -14,8 +13,6 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   config_param :count_keys, :string, default: nil
   config_param :delimiter, :string, default: '_'
   config_param :delete_idle, :bool, default: false
-
-  include Fluent::Mixin::ConfigPlaceholders
 
   attr_accessor :counts
   attr_accessor :last_checked

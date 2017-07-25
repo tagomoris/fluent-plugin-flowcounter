@@ -81,14 +81,6 @@ To count records only (without bytes), omit `count_keys` (it runs in better perf
       tag fluentd.traffic
     </match>
 
-Use '${hostname}' if you want your hostname in tag.
-
-    <match target.**>
-      @type flowcounter
-      count_keys *
-      tag fluentd.node.${hostname}
-    </match>
-
 Counts active tag, stop count records if the tag message stoped(when aggragates per tag).
 
     <match target.**>
@@ -97,6 +89,18 @@ Counts active tag, stop count records if the tag message stoped(when aggragates 
       aggregate tag
       delete_idle true
     </match>
+
+### Embedding Hostname
+
+The current version of this plugin doesn't support `${hostname}` placeholders. Use ruby code embedding for such purpose:
+
+    <match target.**>
+      @type flowcounter
+      count_keys *
+      tag "fluentd.node.#{Socket.gethostname}"
+    </match>
+
+See [Fluentd document page](https://docs.fluentd.org/v0.12/articles/config-file#embedded-ruby-code) for further details.
 
 ## TODO
 

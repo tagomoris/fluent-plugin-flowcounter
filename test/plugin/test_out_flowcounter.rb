@@ -128,15 +128,6 @@ count_keys message
     assert d.instance.count_all
   end
 
-  def test_configure_placeholders
-    d = create_driver %[
-      hostname testing.node.local
-      tag test.flowcount.${hostname}
-      count_keys *
-    ]
-    assert_equal 'test.flowcount.testing.node.local', d.instance.tag
-  end
-
   def test_count_initialized
     d = create_driver %[
       aggregate all
