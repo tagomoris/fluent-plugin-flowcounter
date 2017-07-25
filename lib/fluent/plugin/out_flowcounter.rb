@@ -5,9 +5,9 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
 
   helpers :event_emitter, :timer
 
-  config_param :unit, :string, default: 'minute'
-  config_param :aggregate, :string, default: 'tag'
-  config_param :output_style, :string, default: 'joined'
+  config_param :unit, :enum, list: [:second, :minute, :hour, :day], default: :minute
+  config_param :aggregate, :enum, list: [:tag, :all], default: :tag
+  config_param :output_style, :enum, list: [:joined, :tagged], default: :joined
   config_param :tag, :string, default: 'flowcount'
   config_param :input_tag_remove_prefix, :string, default: nil
   config_param :count_keys, :string, default: nil
@@ -22,14 +22,6 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   def configure(conf)
     super
 
-    @unit = case @unit
-            when 'second' then :second
-            when 'minute' then :minute
-            when 'hour' then :hour
-            when 'day' then :day
-            else
-              raise Fluent::ConfigError, "flowcounter unit allows second/minute/hour/day"
-            end
     @tick = case @unit
             when :second then 1
             when :minute then 60
@@ -38,18 +30,6 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
             else
               raise Fluent::ConfigError, "flowcounter unit allows second/minute/hour/day"
             end
-    @aggregate = case @aggregate
-                 when 'tag' then :tag
-                 when 'all' then :all
-                 else
-                   raise Fluent::ConfigError, "flowcounter aggregate allows tag/all"
-                 end
-    @output_style = case @output_style
-                 when 'joined' then :joined
-                 when 'tagged' then :tagged
-                 else
-                   raise Fluent::ConfigError, "flowcounter output_style allows joined/tagged"
-                 end
     if @output_style == :tagged and @aggregate != :tag
       raise Fluent::ConfigError, "flowcounter aggregate must be 'tag' when output_style is 'tagged'"
     end
