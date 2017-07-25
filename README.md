@@ -25,7 +25,7 @@ If you want to count only records, omit `count_keys` configuration.
 
 ## Configuration
 
-Counts from fields 'field1' and 'field2', per minute(default), aggregates per tags(default), output with tag 'flowcount'(default).
+Counts from fields 'field1' and 'field2', per minute(default), aggregates per tags(default), output with tag 'flowcount'(default). It is strongly recommended to specify `@label` to control event stream routing.
 
     <match **>
       @type copy
@@ -34,13 +34,16 @@ Counts from fields 'field1' and 'field2', per minute(default), aggregates per ta
       </store>
       <store>
         @type flowcounter
+        @label @counts
         count_keys field1,field2
       </store>
     </match>
     
-    <match flowcount>
-      # output configurations where to send count results
-    </match>
+    <label @counts>
+      <match flowcount>
+        # output configurations where to send count results
+      </match>
+    </label>
 
 Counts from field 'message', per hour, aggregates all tags, output with tag 'fluentd.traffic'.
 
@@ -51,6 +54,7 @@ Counts from field 'message', per hour, aggregates all tags, output with tag 'flu
       </store>
       <store>
         @type flowcounter
+        @label @counts
         count_keys message
         unit       hour
         aggregate  all
@@ -58,9 +62,11 @@ Counts from field 'message', per hour, aggregates all tags, output with tag 'flu
       </store>
     </match>
     
-    <match fluentd.traffic>
-      # output configurations where to send count results
-    </match>
+    <label @counts>
+      <match fluentd.traffic>
+        # output configurations where to send count results
+      </match>
+    </label>
 
 To count with all fields in messages, specify 'count_keys *'.
 
@@ -100,12 +106,12 @@ The current version of this plugin doesn't support `${hostname}` placeholders. U
       tag "fluentd.node.#{Socket.gethostname}"
     </match>
 
-See [Fluentd document page](https://docs.fluentd.org/v0.12/articles/config-file#embedded-ruby-code) for further details.
+See [Fluentd document page](https://docs.fluentd.org/articles/config-file#embedded-ruby-code) for further details.
 
 ## TODO
 
-* consider what to do next
-* patches welcome!
+* Support Counter API when it's supported in Fluentd core
+* Patches welcome!
 
 ## Copyright
 
