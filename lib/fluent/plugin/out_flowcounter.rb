@@ -127,7 +127,7 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   def start_watch
     @last_checked = Fluent::Engine.now
     # for internal, or tests only
-    timer_execute(:out_flowcounter_wacher, 0.5, &method(:watch))
+    timer_execute(:out_flowcounter_watcher, 0.5, &method(:watch))
   end
 
   def watch
