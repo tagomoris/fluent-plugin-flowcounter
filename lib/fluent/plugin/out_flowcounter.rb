@@ -1,17 +1,10 @@
+require 'fluent/plugin/output'
 require 'fluent/mixin/config_placeholders'
 
-class Fluent::FlowCounterOutput < Fluent::Output
+class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('flowcounter', self)
 
-  # Define `log` method for v0.10.42 or earlier
-  unless method_defined?(:log)
-    define_method("log") { $log }
-  end
-
-  # Define `router` method of v0.12 to support v0.10 or earlier
-  unless method_defined?(:router)
-    define_method("router") { ::Fluent::Engine }
-  end
+  helpers :event_emitter, :timer
 
   config_param :unit, :string, default: 'minute'
   config_param :aggregate, :string, default: 'tag'
@@ -67,6 +60,7 @@ class Fluent::FlowCounterOutput < Fluent::Output
       @removed_prefix_string = @input_tag_remove_prefix + '.'
       @removed_length = @removed_prefix_string.length
     end
+    @count_all = false
     if @count_keys
       @count_keys = @count_keys.split(',').map(&:strip)
       @count_all = (@count_keys == ['*'])
@@ -86,8 +80,6 @@ class Fluent::FlowCounterOutput < Fluent::Output
 
   def shutdown
     super
-    @watcher.terminate
-    @watcher.join
   end
 
   def count_initialized(keys=nil)
@@ -160,26 +152,22 @@ class Fluent::FlowCounterOutput < Fluent::Output
   end
 
   def start_watch
+    @last_checked = Fluent::Engine.now
     # for internal, or tests only
-    @watcher = Thread.new(&method(:watch))
+    timer_execute(:out_flowcounter_wacher, 0.5, &method(:watch))
   end
 
   def watch
-    # instance variable, and public accessable, for test
-    @last_checked = Fluent::Engine.now
-    while true
-      sleep 0.5
-      if Fluent::Engine.now - @last_checked >= @tick
-        now = Fluent::Engine.now
-        flush_emit(now - @last_checked)
-        @last_checked = now
-      end
+    if Fluent::Engine.now - @last_checked >= @tick
+      now = Fluent::Engine.now
+      flush_emit(now - @last_checked)
+      @last_checked = now
     end
   end
 
   FOR_MISSING = ''
 
-  def emit(tag, es, chain)
+  def process(tag, es)
     name = tag
     if @input_tag_remove_prefix and
         ( (tag.start_with?(@removed_prefix_string) and tag.length > @removed_length) or tag == @input_tag_remove_prefix)
@@ -198,7 +186,5 @@ class Fluent::FlowCounterOutput < Fluent::Output
       }
     end
     countup(name, c, b)
-
-    chain.next
   end
 end

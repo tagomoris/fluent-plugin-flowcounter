@@ -13,8 +13,8 @@ input_tag_remove_prefix test
 count_keys message
   ]
 
-  def create_driver(conf=CONFIG,tag='test')
-    Fluent::Test::OutputTestDriver.new(Fluent::FlowCounterOutput, tag).configure(conf)
+  def create_driver(conf=CONFIG)
+    Fluent::Test::Driver::Output.new(Fluent::Plugin::FlowCounterOutput).configure(conf)
   end
 
   def test_configure
@@ -203,13 +203,13 @@ count_keys message
   end
 
   def test_emit
-    d1 = create_driver(CONFIG, 'test.tag1')
+    d1 = create_driver(CONFIG)
     time = Time.parse("2012-01-02 13:14:15").to_i
-    d1.run do
+    d1.run(default_tag: 'test.tag1') do
       3600.times do
-        d1.emit({'message'=> 'a' * 100})
-        d1.emit({'message'=> 'b' * 100})
-        d1.emit({'message'=> 'c' * 100})
+        d1.feed(time, {'message'=> 'a' * 100})
+        d1.feed(time, {'message'=> 'b' * 100})
+        d1.feed(time, {'message'=> 'c' * 100})
       end
     end
     r1 = d1.instance.flush(3600 * 24)
@@ -223,11 +223,11 @@ count_keys message
       aggregate all
       tag flow
       count_keys f1,f2,f3
-    ], 'test.tag1')
+    ])
     time = Time.parse("2012-01-02 13:14:15").to_i
-    d3.run do
+    d3.run(default_tag: 'test.tag1') do
       60.times do
-        d3.emit({'f1'=>'1'*10, 'f2'=>'2'*20, 'f3'=>'3'*10})
+        d3.feed({'f1'=>'1'*10, 'f2'=>'2'*20, 'f3'=>'3'*10})
       end
     end
     r3 = d3.instance.flush(60)
@@ -244,21 +244,21 @@ count_keys message
       tag  flowcount
       input_tag_remove_prefix test
       count_keys f1,f2,f3
-    ], 'test.tag2')
+    ])
     time = Time.now.to_i
-    d2.run do
+    d2.run(default_tag: 'test.tag2') do
       60.times do
-        d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d2.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d2.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d2.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d2.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d2.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d2.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
       end
+      d2.instance.flush_emit(60)
     end
-    d2.instance.flush_emit(60)
-    emits = d2.emits
-    assert_equal 1, emits.length
-    data = emits[0]
+    events = d2.events
+    assert_equal 1, events.length
+    data = events[0]
     assert_equal 'flowcount', data[0] # tag
     assert_equal 60*5, data[2]['count']
     assert_equal 60*5*20, data[2]['bytes']
@@ -271,21 +271,21 @@ count_keys message
       tag  flowcount
       input_tag_remove_prefix test
       count_keys *
-    ], 'test.tag3')
+    ])
     time = Time.now.to_i
-    d3.run do
+    d3.run(default_tag: 'test.tag3') do
       60.times do
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
       end
+      d3.instance.flush_emit(60)
     end
-    d3.instance.flush_emit(60)
-    emits = d3.emits
-    assert_equal 1, emits.length
-    data = emits[0]
+    events = d3.events
+    assert_equal 1, events.length
+    data = events[0]
     assert_equal 'flowcount', data[0] # tag
     assert_equal 60*5, data[2]['count']
     msgpack_size = {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'}.to_msgpack.bytesize * 5 * 60
@@ -300,11 +300,11 @@ count_keys message
       tag flow
       input_tag_remove_prefix test
       count_keys *
-    ], 'test.tag1')
+    ])
     time = Time.parse("2012-01-02 13:14:15").to_i
-    d1.run do
+    d1.run(default_tag: 'test.tag1') do
       60.times do
-        d1.emit({'message'=> 'hello'})
+        d1.feed(time, {'message'=> 'hello'})
       end
     end
     r1 = d1.instance.tagged_flush(60)
@@ -322,16 +322,17 @@ count_keys message
       aggregate tag
       tag  flowcount
       input_tag_remove_prefix test
-    ], 'test.tag1')
+    ])
     time = Time.parse("2012-01-02 13:14:15").to_i
-    d1.run do
+    r1 = {}
+    d1.run(default_tag: 'test.tag1') do
       3600.times do
-        d1.emit({'message'=> 'a' * 100})
-        d1.emit({'message'=> 'b' * 100})
-        d1.emit({'message'=> 'c' * 100})
+        d1.feed(time, {'message'=> 'a' * 100})
+        d1.feed(time, {'message'=> 'b' * 100})
+        d1.feed(time, {'message'=> 'c' * 100})
       end
+      r1 = d1.instance.flush(3600 * 24)
     end
-    r1 = d1.instance.flush(3600 * 24)
     assert_equal 3600*3, r1['tag1_count']
     assert_nil r1['tag1_bytes']
     assert_equal (300/24.0).floor / 100.0, r1['tag1_count_rate'] # 3 * 3600 / (60 * 60 * 24) as xx.xx
@@ -341,11 +342,11 @@ count_keys message
       unit minute
       aggregate all
       tag flow
-    ], 'test.tag1')
+    ])
     time = Time.parse("2012-01-02 13:14:15").to_i
-    d3.run do
+    d3.run(default_tag: 'test.tag1') do
       60.times do
-        d3.emit({'f1'=>'1'*10, 'f2'=>'2'*20, 'f3'=>'3'*10})
+        d3.feed({'f1'=>'1'*10, 'f2'=>'2'*20, 'f3'=>'3'*10})
       end
     end
     r3 = d3.instance.flush(60)
@@ -362,21 +363,21 @@ count_keys message
       tag  flowcount
       input_tag_remove_prefix test
       count_keys f4
-    ], 'test.tag4')
+    ])
     time = Time.now.to_i
-    d3.run do
+    d3.run(default_tag: 'test.tag4', expect_emits: 1) do
       60.times do
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
-        d3.emit({'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
+        d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
       end
+      d3.instance.flush_emit(60)
     end
-    d3.instance.flush_emit(60)
-    emits = d3.emits
-    assert_equal 1, emits.length
-    data = emits[0]
+    events = d3.events
+    assert_equal 1, events.length
+    data = events[0]
     assert_equal 'flowcount', data[0]
     assert_equal 60*5, data[2]['count']
     assert_equal 0, data[2]['bytes']
