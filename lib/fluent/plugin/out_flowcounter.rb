@@ -1,4 +1,5 @@
 require 'fluent/plugin/output'
+require 'time'
 
 class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('flowcounter', self)
@@ -6,6 +7,8 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   helpers :event_emitter, :timer
 
   config_param :unit, :enum, list: [:second, :minute, :hour, :day], default: :minute
+  config_param :timestamp_counting, :bool, default: false
+  config_param :timestamp_timezone, :string, default: nil
   config_param :aggregate, :enum, list: [:tag, :all], default: :tag
   config_param :output_style, :enum, list: [:joined, :tagged], default: :joined
   config_param :tag, :string, default: 'flowcount'
@@ -45,13 +48,44 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
       @count_bytes = false
     end
 
+    if @timestamp_counting
+      @timestamp_timezone_offset = 0
+      if @unit == :second
+        raise Fluent::ConfigError, "timestamp_counting cannot be enabled with unit: second"
+      elsif @unit == :day
+        unless @timestamp_timezone
+          raise Fluent::ConfigError, "timestamp_counting requires timestamp_timezone to be configured (e.g., '-0700') if unit is day"
+        end
+        @timestamp_timezone_offset = Time.zone_offset(@timestamp_timezone)
+        unless @timestamp_timezone_offset
+          raise Fluent::ConfigError, "invalid timestamp_timezone value (specify like '-0700')"
+        end
+      end
+      @last_checked = nil
+      @initializer = ->{ now = Fluent::EventTime.now.to_i; @last_checked = now - (now % @tick) - @timestamp_timezone_offset }
+      @checker = ->{ Fluent::EventTime.now.to_i - @last_checked >= @tick }
+      @updater = ->{ @last_checked += @tick; return Fluent::EventTime.new(@last_checked, 0), @tick }
+    else
+      @last_checked = nil
+      @initializer = ->{ @last_checked = Fluent::Clock.now }
+      @checker = ->{ Fluent::Clock.now - @last_checked >= @tick }
+      @updater = ->{ prev = @last_checked; @last_checked = Fluent::Clock.now; return Fluent::EventTime.now, @last_checked - prev }
+    end
+
     @counts = count_initialized
     @mutex = Mutex.new
   end
 
   def start
     super
-    start_watch
+
+    @initializer.call
+    timer_execute(:out_flowcounter_watcher, 0.5) do
+      if @checker.call
+        now, interval = @updater.call
+        flush_emit(now, interval)
+      end
+    end
   end
 
   def count_initialized(keys=nil)
@@ -113,27 +147,13 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
     }
   end
 
-  def flush_emit(step)
+  def flush_emit(now, step)
     if @output_style == :tagged
       tagged_flush(step).each do |data|
-        router.emit(@tag, Fluent::Engine.now, data)
+        router.emit(@tag, now, data)
       end
     else
-      router.emit(@tag, Fluent::Engine.now, flush(step))
-    end
-  end
-
-  def start_watch
-    @last_checked = Fluent::Engine.now
-    # for internal, or tests only
-    timer_execute(:out_flowcounter_watcher, 0.5, &method(:watch))
-  end
-
-  def watch
-    if Fluent::Engine.now - @last_checked >= @tick
-      now = Fluent::Engine.now
-      flush_emit(now - @last_checked)
-      @last_checked = now
+      router.emit(@tag, now, flush(step))
     end
   end
 
