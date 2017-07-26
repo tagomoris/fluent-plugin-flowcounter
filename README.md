@@ -96,6 +96,29 @@ Counts active tag, stop count records if the tag message stoped(when aggragates 
       delete_idle true
     </match>
 
+### Generate Output at Zero Time
+
+If you want to generate count results at every 0 second (for unit:minute), at every 00:00 (for unit:hour) or at every 00:00:00 (for unit:day), specify `timestamp_counting true` in your configuration.
+
+    <match target.**>
+      @type flowcounter
+      count_keys *
+      aggregate all
+      unit hour
+      timestamp_counting true
+    </match>
+
+The configuration above emits output at 00:00:00, 01:00:00, 02:00:00, .... every day. In this use case, `unit: day` requires to configure `timestamp_timezone` to set the timezone to determine the beginning of the day.
+
+    <match target.**>
+      @type flowcounter
+      count_keys *
+      aggregate all
+      unit day
+      timestamp_counting true
+      timestamp_timezone -03:00
+    </match>
+
 ### Embedding Hostname
 
 The current version of this plugin doesn't support `${hostname}` placeholders. Use ruby code embedding for such purpose:
