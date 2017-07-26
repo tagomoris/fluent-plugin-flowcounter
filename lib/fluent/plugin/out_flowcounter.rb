@@ -10,7 +10,7 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
   config_param :output_style, :enum, list: [:joined, :tagged], default: :joined
   config_param :tag, :string, default: 'flowcount'
   config_param :input_tag_remove_prefix, :string, default: nil
-  config_param :count_keys, :string, default: nil
+  config_param :count_keys, :array, value_type: :string, default: []
   config_param :delimiter, :string, default: '_'
   config_param :delete_idle, :bool, default: false
 
@@ -38,8 +38,7 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
       @removed_length = @removed_prefix_string.length
     end
     @count_all = false
-    if @count_keys
-      @count_keys = @count_keys.split(',').map(&:strip)
+    if @count_keys && !@count_keys.empty?
       @count_all = (@count_keys == ['*'])
       @count_bytes = true
     else
