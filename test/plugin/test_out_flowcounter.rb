@@ -1,8 +1,14 @@
 require 'helper'
+require 'timecop'
 
 class FlowCounterOutputTest < Test::Unit::TestCase
   def setup
     Fluent::Test.setup
+  end
+
+  def teardown
+    Fluent::Clock.return
+    Timecop.return
   end
 
   CONFIG = %[
@@ -245,7 +251,7 @@ count_keys message
         d2.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
         d2.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
       end
-      d2.instance.flush_emit(60)
+      d2.instance.flush_emit(Fluent::EventTime.now, 60)
     end
     events = d2.events
     assert_equal 1, events.length
@@ -272,7 +278,7 @@ count_keys message
         d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
         d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
       end
-      d3.instance.flush_emit(60)
+      d3.instance.flush_emit(Fluent::EventTime.now, 60)
     end
     events = d3.events
     assert_equal 1, events.length
@@ -364,7 +370,7 @@ count_keys message
         d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
         d3.feed(time, {'f1' => 'abcde', 'f2' => 'vwxyz', 'f3' => '0123456789'})
       end
-      d3.instance.flush_emit(60)
+      d3.instance.flush_emit(Fluent::EventTime.now, 60)
     end
     events = d3.events
     assert_equal 1, events.length
@@ -372,5 +378,199 @@ count_keys message
     assert_equal 'flowcount', data[0]
     assert_equal 60*5, data[2]['count']
     assert_equal 0, data[2]['bytes']
+  end
+
+  data(
+    minute: ["minute", 59, 61, 90, 100, 110, 122],
+    hour: ["hour", 3500, 3601, 3800, 6900, 7180, 7202],
+    day: ["day", 86350, 86401, 86400+20000, 86400+65000, 86400+86350, 86400+86402],
+  )
+  test 'emit timing' do |data|
+    unit, time1, time2, time3, time4, time5, time6 = data
+
+    d = create_driver %[
+      unit #{unit}
+      timestamp_counting false
+      aggregate all
+      tag flowcount
+      count_keys message
+    ]
+
+    start = Fluent::Clock.now
+    Fluent::Clock.freeze(start)
+
+    first_emit_before = nil
+    first_emit_after = nil
+    second_emit_before = nil
+    second_emit_after = nil
+
+    prev_emit_count = 0
+    wait_next_emit = ->{
+      waiting(10) do
+        sleep 0.1 while d.emit_count == prev_emit_count
+        prev_emit_count = d.emit_count
+      end
+    }
+
+    d.run(default_tag: 'test', timeout: 300_000) do
+      3600.times do
+        d.feed({'message'=> 'a' * 100})
+        d.feed({'message'=> 'b' * 100})
+        d.feed({'message'=> 'c' * 100})
+      end
+
+      Fluent::Clock.freeze(start + time1)
+      sleep 2 # nothing emitted here - clock is frozen
+      assert_equal 0, d.emit_count
+
+      3600.times do
+        d.feed({'message'=> 'a' * 100})
+        d.feed({'message'=> 'b' * 100})
+        d.feed({'message'=> 'c' * 100})
+      end
+
+      first_emit_before = Fluent::EventTime.now
+      Fluent::Clock.freeze(start + time2)
+      wait_next_emit.call # emitted from 7200 * 3 events
+      first_emit_after = Fluent::EventTime.now
+
+      Fluent::Clock.freeze(start + time3)
+
+      3600.times do
+        d.feed({'message'=> 'a' * 100})
+        d.feed({'message'=> 'b' * 100})
+        d.feed({'message'=> 'c' * 100})
+      end
+
+      Fluent::Clock.freeze(start + time4)
+      sleep 1
+      assert_equal prev_emit_count, d.emit_count
+
+      Fluent::Clock.freeze(start + time5)
+      sleep 1
+      assert_equal prev_emit_count, d.emit_count
+
+      second_emit_before = Fluent::EventTime.now
+      Fluent::Clock.freeze(start + time6)
+      wait_next_emit.call # emitted from 3600 events
+      second_emit_after = Fluent::EventTime.now
+    end
+
+    events = d.events
+    assert_equal 2, events.size
+    tag, t1, r1 = events[0]
+    assert{ t1 >= first_emit_before }
+    assert{ t1 <= first_emit_after }
+    assert_equal 3600*3*2, r1["count"]
+    tag, t2, r2 = events[1]
+    assert{ t2 >= second_emit_before }
+    assert{ t2 <= second_emit_after }
+    assert_equal 3600*3, r2["count"]
+  end
+
+  data(
+    minute: [
+      "minute",
+      "",
+      Time.utc(2017,7,26,13,49, 3),
+      Time.utc(2017,7,26,13,49,55),
+      Time.utc(2017,7,26,13,50, 0),
+      Time.utc(2017,7,26,13,50, 3),
+      Time.utc(2017,7,26,13,50,49),
+      Time.utc(2017,7,26,13,51, 0)],
+    hour: [
+      "hour",
+      "",
+      Time.utc(2017,7,26,13,49, 3),
+      Time.utc(2017,7,26,13,59,58),
+      Time.utc(2017,7,26,14, 0, 0),
+      Time.utc(2017,7,26,14,15,49),
+      Time.utc(2017,7,26,14,58, 0),
+      Time.utc(2017,7,26,15, 0, 0)],
+    day: [
+      "day",
+      "timestamp_timezone +0000",
+      Time.utc(2017,7,26,13,49, 3),
+      Time.utc(2017,7,26,23,59,58),
+      Time.utc(2017,7,27, 0, 0, 0),
+      Time.utc(2017,7,27, 1,30,10),
+      Time.utc(2017,7,27,23,38,50),
+      Time.utc(2017,7,28, 0, 0, 0)],
+    dayz: [
+      "day",
+      "timestamp_timezone -0700",
+      Time.new(2017,7,26,13,49, 3, "-07:00"),
+      Time.new(2017,7,26,23,59,58, "-07:00"),
+      Time.new(2017,7,27, 0, 0, 0, "-07:00"),
+      Time.new(2017,7,27, 1,30,10, "-07:00"),
+      Time.new(2017,7,27,23,38,50, "-07:00"),
+      Time.new(2017,7,28, 0, 0, 0, "-07:00")],
+  )
+  test 'emit timing with timestamp_counting' do |data|
+    unit, conf, start, time1, time2, time3, time4, time5 = data
+
+    d = create_driver %[
+      unit #{unit}
+      timestamp_counting true
+      #{conf}
+      aggregate all
+      tag flowcount
+      count_keys message
+    ]
+
+    Timecop.freeze(start)
+
+    prev_emit_count = 0
+    wait_next_emit = ->{
+      waiting(10) do
+        sleep 0.1 while d.emit_count == prev_emit_count
+        prev_emit_count = d.emit_count
+      end
+    }
+
+    d.run(default_tag: 'test', timeout: 300_000) do
+      3600.times do
+        d.feed({'message'=> 'a' * 100})
+        d.feed({'message'=> 'b' * 100})
+        d.feed({'message'=> 'c' * 100})
+      end
+
+      Timecop.freeze(time1)
+      sleep 2 # nothing emitted here - time is frozen
+      assert_equal 0, d.emit_count
+
+      3600.times do
+        d.feed({'message'=> 'a' * 100})
+        d.feed({'message'=> 'b' * 100})
+        d.feed({'message'=> 'c' * 100})
+      end
+
+      Timecop.freeze(time2)
+      wait_next_emit.call # emitted from 7200 * 3 events
+
+      Timecop.freeze(time3)
+
+      3600.times do
+        d.feed({'message'=> 'a' * 100})
+        d.feed({'message'=> 'b' * 100})
+        d.feed({'message'=> 'c' * 100})
+      end
+
+      Timecop.freeze(time4)
+      sleep 1
+      assert_equal prev_emit_count, d.emit_count
+
+      Timecop.freeze(time5)
+      wait_next_emit.call # emitted from 3600 events
+    end
+
+    events = d.events
+    assert_equal 2, events.size
+    tag, t1, r1 = events[0]
+    assert_equal Fluent::EventTime.new(time2.to_i, 0), t1
+    assert_equal 3600*3*2, r1["count"]
+    tag, t2, r2 = events[1]
+    assert_equal Fluent::EventTime.new(time5.to_i, 0), t2
+    assert_equal 3600*3, r2["count"]
   end
 end
