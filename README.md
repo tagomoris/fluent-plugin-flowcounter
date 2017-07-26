@@ -98,6 +98,8 @@ Counts active tag, stop count records if the tag message stoped(when aggragates 
 
 ### Generate Output at Zero Time
 
+(NOTE: This feature is supported at v1.1.0 or later - only for Fluentd v0.14 or later.)
+
 If you want to generate count results at every 0 second (for unit:minute), at every 00:00 (for unit:hour) or at every 00:00:00 (for unit:day), specify `timestamp_counting true` in your configuration.
 
     <match target.**>
