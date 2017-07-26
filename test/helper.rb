@@ -17,3 +17,13 @@ require 'fluent/plugin/out_flowcounter'
 
 class Test::Unit::TestCase
 end
+
+def waiting(seconds)
+  begin
+    Timeout.timeout(seconds) do
+      yield
+    end
+  rescue Timeout::Error
+    raise "Timed out with timeout second #{seconds}"
+  end
+end
