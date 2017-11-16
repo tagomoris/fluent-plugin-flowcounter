@@ -1,4 +1,5 @@
 require 'fluent/plugin/output'
+require 'fluent/clock'
 require 'time'
 
 class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
