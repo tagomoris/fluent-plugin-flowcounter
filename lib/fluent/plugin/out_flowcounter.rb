@@ -77,6 +77,10 @@ class Fluent::Plugin::FlowCounterOutput < Fluent::Plugin::Output
     @mutex = Mutex.new
   end
 
+  def multi_workers_ready?
+    true
+  end
+
   def start
     super
 
